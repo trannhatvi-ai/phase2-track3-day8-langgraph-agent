@@ -34,7 +34,11 @@ class MetricsReport(BaseModel):
     scenario_metrics: list[ScenarioMetric]
 
 
-def metric_from_state(state: dict[str, Any], expected_route: str, approval_required: bool) -> ScenarioMetric:
+def metric_from_state(
+    state: dict[str, Any],
+    expected_route: str,
+    approval_required: bool,
+) -> ScenarioMetric:
     events = state.get("events", []) or []
     errors = state.get("errors", []) or []
     actual_route = state.get("route")
@@ -42,7 +46,9 @@ def metric_from_state(state: dict[str, Any], expected_route: str, approval_requi
     nodes = [event.get("node", "unknown") for event in events]
     retry_count = sum(1 for node in nodes if node == "retry")
     interrupt_count = sum(1 for node in nodes if node == "approval")
-    success = actual_route == expected_route and bool(state.get("final_answer") or state.get("pending_question"))
+    success = actual_route == expected_route and bool(
+        state.get("final_answer") or state.get("pending_question")
+    )
     if approval_required:
         success = success and approval is not None
     return ScenarioMetric(
@@ -59,16 +65,24 @@ def metric_from_state(state: dict[str, Any], expected_route: str, approval_requi
     )
 
 
-def summarize_metrics(items: list[ScenarioMetric]) -> MetricsReport:
+def summarize_metrics(items: list[ScenarioMetric], resume_success: bool = False) -> MetricsReport:
     if not items:
-        raise ValueError("No scenario metrics to summarize")
+        return MetricsReport(
+            total_scenarios=0,
+            success_rate=0,
+            avg_nodes_visited=0,
+            total_retries=0,
+            total_interrupts=0,
+            resume_success=resume_success,
+            scenario_metrics=[],
+        )
     return MetricsReport(
         total_scenarios=len(items),
         success_rate=sum(1 for item in items if item.success) / len(items),
         avg_nodes_visited=mean(item.nodes_visited for item in items),
         total_retries=sum(item.retry_count for item in items),
         total_interrupts=sum(item.interrupt_count for item in items),
-        resume_success=False,
+        resume_success=resume_success,
         scenario_metrics=items,
     )
 

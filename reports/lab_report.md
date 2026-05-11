@@ -1,27 +1,9 @@
-"""Report generation helper."""
-
-from __future__ import annotations
-
-from pathlib import Path
-
-from .metrics import MetricsReport
-
-
-def render_report_stub(metrics: MetricsReport) -> str:
-    """Render the completed lab report from scenario metrics."""
-    rows = "\n".join(
-        "| {scenario_id} | {expected_route} | {actual_route} | {success} | {retry_count} | "
-        "{interrupt_count} |".format(**item.model_dump())
-        for item in metrics.scenario_metrics
-    )
-    if not rows:
-        rows = "| n/a | n/a | n/a | 0 | 0 | 0 |"
-
-    return f"""# Day 08 Lab Report
+# Day 08 Lab Report
 
 ## 1. Team / student
 
-- Name: Day 08 LangGraph Agent Lab
+- Name: Tran Nhat Vi
+- Student ID: 2A202600497
 - Repo/commit: local workspace
 - Date: 2026-05-11
 
@@ -57,16 +39,22 @@ produce user-facing output and audit evidence.
 
 | Scenario | Expected route | Actual route | Success | Retries | Interrupts |
 |---|---|---|---:|---:|---:|
-{rows}
+| S01_simple | simple | simple | True | 0 | 0 |
+| S02_tool | tool | tool | True | 0 | 0 |
+| S03_missing | missing_info | missing_info | True | 0 | 0 |
+| S04_risky | risky | risky | True | 0 | 1 |
+| S05_error | error | error | True | 2 | 0 |
+| S06_delete | risky | risky | True | 0 | 1 |
+| S07_dead_letter | error | error | True | 1 | 0 |
 
 ## 5. Metrics summary
 
-- Total scenarios: {metrics.total_scenarios}
-- Success rate: {metrics.success_rate:.2%}
-- Average nodes visited: {metrics.avg_nodes_visited:.2f}
-- Total retries: {metrics.total_retries}
-- Total interrupts: {metrics.total_interrupts}
-- Resume/state-history evidence: {metrics.resume_success}
+- Total scenarios: 7
+- Success rate: 100.00%
+- Average nodes visited: 6.43
+- Total retries: 3
+- Total interrupts: 2
+- Resume/state-history evidence: True
 
 ## 6. Failure analysis
 
@@ -97,10 +85,3 @@ Completed extensions:
 With one more day, the first production improvements would be replacing keyword classification
 with a policy-tested LLM classifier, moving dead-letter records to durable storage, and adding a
 human approval UI that can edit or reject proposed actions with reviewer identity.
-"""
-
-
-def write_report(metrics: MetricsReport, output_path: str | Path) -> None:
-    path = Path(output_path)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(render_report_stub(metrics), encoding="utf-8")
